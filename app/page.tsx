@@ -116,7 +116,7 @@ export default function Home() {
                     setShowSignup(true);
                   }}
                 >
-                  Don't have an account? Sign up
+                  Do not have an account? Sign up
                 </button>
               </div>
             </div>
