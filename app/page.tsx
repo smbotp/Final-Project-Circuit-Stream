@@ -1,6 +1,6 @@
 "use client";
 import { useContext } from "react";
-import { ModalContext } from "../app/layout";
+import { ModalContext } from "../components/ModalContext";
 import FadeInSection from "../components/FadeInSection";
 import Image from "next/image";
 import Link from "next/link";
