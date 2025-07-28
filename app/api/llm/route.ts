@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   const { prompt } = await request.json();
 
   // Place your OpenAI API key here (for production, use process.env.OPENAI_API_KEY)
-  const apiKey = "your api key here";
+  const apiKey = "your api key here ";
   if (!apiKey) {
     return NextResponse.json({ error: "Missing OpenAI API key" }, { status: 500 });
   }
