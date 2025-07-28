@@ -41,3 +41,5 @@ export async function POST(request: Request) {
   console.log("Raw OpenAI API response:", data);
   return NextResponse.json({ text: data.choices?.[0]?.message?.content ?? "" });
 }
+
+let users: unknown[] = [];
