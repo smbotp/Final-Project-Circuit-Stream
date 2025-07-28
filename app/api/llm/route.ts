@@ -4,14 +4,17 @@ export async function POST(request: Request) {
   const { prompt } = await request.json();
 
   // Place your OpenAI API key here (for production, use process.env.OPENAI_API_KEY)
-  const apiKey = "your api key here ";
+  const apiKey = "your api key here";
   if (!apiKey) {
     return NextResponse.json({ error: "Missing OpenAI API key" }, { status: 500 });
   }
 
+  // Use the same model in log and fetch
+  const model = "gpt-4o";
+
   // Log the payload being sent to OpenAI
   console.log("Sending to OpenAI:", {
-    model: "gpt-4o",
+    model,
     messages: [{ role: "user", content: prompt }],
     max_tokens: 300,
     temperature: 0.7,
@@ -24,7 +27,7 @@ export async function POST(request: Request) {
       "Authorization": `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "gpt-4-1106-preview",
+      model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: 300,
       temperature: 0.7,
