@@ -129,7 +129,10 @@ Black:
 1. Opening Name
 2. Opening Name
 3. Opening Name
-    `.trim();
+  `.trim();
+
+    // Log what is being sent to the LLM
+    console.log("Prompt sent to LLM:", prompt);
 
     setLoadingSuggestions(true);
     try {
@@ -139,8 +142,13 @@ Black:
         body: JSON.stringify({ prompt }),
       });
       const data = await res.json();
-      const whiteMatches = data.text.match(/White:\\s*([\\s\\S]*?)Black:/i);
+
+      console.log("LLM response:", data.text);
+
+      // Parse LLM response for suggestions
+      const whiteMatches = data.text.match(/White:\\s*([\\s\\S]*?)\\n\\n/i);
       const blackMatches = data.text.match(/Black:\\s*([\\s\\S]*)/i);
+
       setSuggestedWhite(
         whiteMatches
           ? whiteMatches[1]
@@ -158,6 +166,7 @@ Black:
           : []
       );
     } catch (e) {
+      console.error("Error fetching or parsing LLM suggestions:", e);
       setSuggestedWhite([]);
       setSuggestedBlack([]);
     }
@@ -171,31 +180,39 @@ Black:
   }, [openingsStatsWhite, openingsStatsBlack]);
 
   return (
-    <div className="min-h-screen bg-[#f7f3eb] dark:bg-gray-900 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-extrabold mb-8">
-          Hello,{" "}
-          <span className="text-blue-700">{user?.username || "User"}</span>
+    <div className="min-h-screen bg-[#f7f3eb] dark:bg-gray-900 py-4 px-2 md:py-8 md:px-4">
+      <div className="max-w-6xl mx-auto w-full">
+        <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-8">
+          Hello, <span className="text-blue-700">{user?.username || "User"}</span>
         </h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch" style={{ minHeight: "600px" }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 items-stretch w-full">
           {/* Chessboard + XP */}
-          <div className="md:col-span-1 flex flex-col items-center">
+          <div className="flex flex-col items-center min-w-0">
             {/* Chessboard with border radius and shadow */}
-            <div
-              className="mb-4"
-              style={{
-                borderRadius: "1rem",
-                overflow: "hidden",
-                boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
-                width: 350,
-                height: 350,
-                background: "white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+            <div className="relative mb-4 flex items-center justify-center" style={{
+              borderRadius: "1rem",
+              overflow: "hidden",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+              width: 350,
+              height: 350,
+              background: "white",
+            }}>
               <ChessPuzzleBoard fen={puzzles[0]?.fen || "start"} />
+              {/* Coming Soon Overlay */}
+              <div
+                className="absolute inset-0 flex items-center justify-center text-center"
+                style={{
+                  background: "rgba(255,255,255,0.7)",
+                  zIndex: 10,
+                  fontSize: "2rem",
+                  fontWeight: "bold",
+                  color: "#374151",
+                  letterSpacing: "0.05em",
+                  pointerEvents: "none"
+                }}
+              >
+                Custom Puzzles Coming Soon!
+              </div>
             </div>
             <div className="w-full bg-green-700 text-white rounded-lg py-3 px-4 text-center font-semibold text-lg">
               XP until LVL [ ]
@@ -209,14 +226,14 @@ Black:
             )}
           </div>
           {/* Rating Over Time */}
-          <div className="md:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col h-full">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 flex flex-col h-full min-w-0">
             <h2 className="font-bold text-lg mb-2">Rating Over Time</h2>
             <div className="flex-1 flex items-center justify-center">
               <span className="text-gray-400">[Chart]</span>
             </div>
           </div>
           {/* Suggested Openings */}
-          <div className="md:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col h-full">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 flex flex-col h-full min-w-0">
             <h2 className="font-bold text-lg mb-2">Suggested Openings</h2>
             <div className="flex flex-col gap-4 flex-1">
               <div>
@@ -254,180 +271,183 @@ Black:
             </div>
           </div>
         </div>
-        {/* Stats */}
-        <div className="md:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col mt-6">
-          <h2 className="font-bold text-lg mb-2">Stats</h2>
-          <div className="mb-2">
-            <div className="font-semibold">Chess.com Ratings:</div>
-            {user?.chesscom ? (
-              <div className="text-gray-700 text-sm">
-                Blitz: {user.chesscom.blitz ?? "—"} | Rapid: {user.chesscom.rapid ?? "—"} | Bullet: {user.chesscom.bullet ?? "—"}
-              </div>
-            ) : (
-              <div className="text-gray-400 text-sm">No Chess.com ratings found.</div>
-            )}
-          </div>
-
-          {user?.lichess && (
+        {/* Stats, Losses, Openings Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mt-6 w-full">
+          {/* Stats */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 flex flex-col min-w-0">
+            <h2 className="font-bold text-lg mb-2">Stats</h2>
             <div className="mb-2">
-              <div className="font-semibold">Lichess Ratings:</div>
+              <div className="font-semibold">Chess.com Ratings:</div>
+              {user?.chesscom ? (
+                <div className="text-gray-700 text-sm">
+                  Blitz: {user.chesscom.blitz ?? "—"} | Rapid: {user.chesscom.rapid ?? "—"} | Bullet: {user.chesscom.bullet ?? "—"}
+                </div>
+              ) : (
+                <div className="text-gray-400 text-sm">No Chess.com ratings found.</div>
+              )}
+            </div>
+
+            {user?.lichess && (
+              <div className="mb-2">
+                <div className="font-semibold">Lichess Ratings:</div>
+                <div className="text-gray-700 text-sm">
+                  Blitz: {user.lichess.blitz ?? "—"} | Rapid: {user.lichess.rapid ?? "—"} | Bullet: {user.lichess.bullet ?? "—"}
+                </div>
+              </div>
+            )}
+            <div className="mb-2">
+              <div className="font-semibold">Total Games:</div>
               <div className="text-gray-700 text-sm">
-                Blitz: {user.lichess.blitz ?? "—"} | Rapid: {user.lichess.rapid ?? "—"} | Bullet: {user.lichess.bullet ?? "—"}
+                {((user?.chesscom?.games ?? 0) + (user?.lichess?.games ?? 0))}
               </div>
             </div>
-          )}
-          <div className="mb-2">
-            <div className="font-semibold">Total Games:</div>
-            <div className="text-gray-700 text-sm">
-              {((user?.chesscom?.games ?? 0) + (user?.lichess?.games ?? 0))}
+            <div>
+              <div className="font-semibold">Win Rate:</div>
+              <div className="text-gray-700 text-sm">
+                {user?.chesscom && user?.lichess
+                  ? Math.round(
+                      (
+                        ((user.chesscom.winrate ?? 0) * (user.chesscom.games ?? 0) +
+                          (user.lichess.winrate ?? 0) * (user.lichess.games ?? 0)) /
+                        ((user.chesscom.games ?? 0) + (user.lichess.games ?? 0))
+                      )
+                    ) + "%"
+                  : user?.chesscom?.winrate
+                  ? user.chesscom.winrate + "%"
+                  : user?.lichess?.winrate
+                  ? user.lichess.winrate + "%"
+                  : "—"}
+              </div>
             </div>
           </div>
-          <div>
-            <div className="font-semibold">Win Rate:</div>
-            <div className="text-gray-700 text-sm">
-              {user?.chesscom && user?.lichess
-                ? Math.round(
-                    (
-                      ((user.chesscom.winrate ?? 0) * (user.chesscom.games ?? 0) +
-                        (user.lichess.winrate ?? 0) * (user.lichess.games ?? 0)) /
-                      ((user.chesscom.games ?? 0) + (user.lichess.games ?? 0))
-                    )
-                  ) + "%"
-                : user?.chesscom?.winrate
-                ? user.chesscom.winrate + "%"
-                : user?.lichess?.winrate
-                ? user.lichess.winrate + "%"
-                : "—"}
+          {/* Losses */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 flex flex-col min-w-0">
+            <h2 className="font-bold text-lg mb-2">Your Losses</h2>
+            <div className="flex-1 flex items-center justify-center">
+              <LossDonutChart games={allGames} username={user?.username} />
+            </div>
+            <div className="mt-2 text-sm">
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#7c5e3c] inline-block"></span> Higher-rated</div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#bfa77a] inline-block"></span> Similarly-rated</div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#f7e6c7] inline-block"></span> Lower-rated</div>
             </div>
           </div>
-        </div>
-        {/* Losses */}
-        <div className="md:col-span-1 bg-white dark:bg-gray-800 rounded-lg shadow p-6 flex flex-col mt-6">
-          <h2 className="font-bold text-lg mb-2">Your Losses</h2>
-          <div className="flex-1 flex items-center justify-center">
-            <LossDonutChart games={allGames} username={user?.username} />
-          </div>
-          <div className="mt-2 text-sm">
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#7c5e3c] inline-block"></span> Higher-rated</div>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#bfa77a] inline-block"></span> Similarly-rated</div>
-            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-[#f7e6c7] inline-block"></span> Lower-rated</div>
-          </div>
-        </div>
-        {/* Openings Stats - Displaying top 5 openings */}
-        <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 className="font-bold text-lg mb-4">Top 5 Openings Stats</h2>
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* White Openings */}
-            <div className="flex-1">
-              <h3 className="font-semibold text-md mb-2 text-gray-700">White</h3>
-              {openingsStatsWhite && openingsStatsWhite.length > 0 ? (
-                openingsStatsWhite.slice(0, 5).map((o, idx) => (
-                  <div key={`white-${o.eco || "unknown"}-${o.name || "unknown"}-${idx}`} className="mb-4">
-                    <strong>{o.name && o.name !== o.eco ? o.name : o.eco || "Unknown Opening"}</strong> ({o.count} games)
-                    <div
-                      className="flex overflow-hidden mt-2 w-1/2"
-                      style={{
-                        height: "16px",
-                        borderRadius: "8px",
-                        background: "#eee",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
-                      }}
-                    >
+          {/* Openings Stats */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 mt-4 md:mt-0 flex flex-col min-w-0">
+            <h2 className="font-bold text-lg mb-4">Top 5 Openings Stats</h2>
+            <div className="flex flex-col md:flex-row gap-4 md:gap-8 w-full">
+              {/* White Openings */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-md mb-2 text-gray-700">White</h3>
+                {openingsStatsWhite && openingsStatsWhite.length > 0 ? (
+                  openingsStatsWhite.slice(0, 5).map((o, idx) => (
+                    <div key={`white-${o.eco || "unknown"}-${o.name || "unknown"}-${idx}`} className="mb-4">
+                      <strong>{o.name && o.name !== o.eco ? o.name : o.eco || "Unknown Opening"}</strong> ({o.count} games)
                       <div
+                        className="flex overflow-hidden mt-2 w-1/2"
                         style={{
-                          width: `${o.winPct}%`,
-                          background: "#22c55e",
-                          borderTopLeftRadius: "8px",
-                          borderBottomLeftRadius: "8px",
-                          transition: "width 0.3s"
+                          height: "16px",
+                          borderRadius: "8px",
+                          background: "#eee",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
                         }}
-                        title={`Win: ${o.winPct}%`}
-                      />
-                      <div
-                        style={{
-                          width: `${o.drawPct}%`,
-                          background: "#a3a3a3",
-                          transition: "width 0.3s"
-                        }}
-                        title={`Draw: ${o.drawPct}%`}
-                      />
-                      <div
-                        style={{
-                          width: `${o.lossPct}%`,
-                          background: "#ef4444",
-                          borderTopRightRadius: "8px",
-                          borderBottomRightRadius: "8px",
-                          transition: "width 0.3s"
-                        }}
-                        title={`Loss: ${o.lossPct}%`}
-                      />
+                      >
+                        <div
+                          style={{
+                            width: `${o.winPct}%`,
+                            background: "#22c55e",
+                            borderTopLeftRadius: "8px",
+                            borderBottomLeftRadius: "8px",
+                            transition: "width 0.3s"
+                          }}
+                          title={`Win: ${o.winPct}%`}
+                        />
+                        <div
+                          style={{
+                            width: `${o.drawPct}%`,
+                            background: "#a3a3a3",
+                            transition: "width 0.3s"
+                          }}
+                          title={`Draw: ${o.drawPct}%`}
+                        />
+                        <div
+                          style={{
+                            width: `${o.lossPct}%`,
+                            background: "#ef4444",
+                            borderTopRightRadius: "8px",
+                            borderBottomRightRadius: "8px",
+                            transition: "width 0.3s"
+                          }}
+                          title={`Loss: ${o.lossPct}%`}
+                        />
+                      </div>
+                      <div className="flex text-xs mt-1 gap-2">
+                        <span className="text-green-600">Win: {o.winPct}%</span>
+                        <span className="text-gray-600">Draw: {o.drawPct}%</span>
+                        <span className="text-red-600">Loss: {o.lossPct}%</span>
+                      </div>
                     </div>
-                    <div className="flex text-xs mt-1 gap-2">
-                      <span className="text-green-600">Win: {o.winPct}%</span>
-                      <span className="text-gray-600">Draw: {o.drawPct}%</span>
-                      <span className="text-red-600">Loss: {o.lossPct}%</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-gray-400">No opening data found.</div>
-              )}
-            </div>
-            {/* Black Openings */}
-            <div className="flex-1">
-              <h3 className="font-semibold text-md mb-2 text-gray-700">Black</h3>
-              {openingsStatsBlack && openingsStatsBlack.length > 0 ? (
-                openingsStatsBlack.slice(0, 5).map((o, idx) => (
-                  <div key={`black-${o.eco || "unknown"}-${o.name || "unknown"}-${idx}`} className="mb-4">
-                    <strong>{o.name && o.name !== o.eco ? o.name : o.eco || "Unknown Opening"}</strong> ({o.count} games)
-                    <div
-                      className="flex overflow-hidden mt-2 w-1/2"
-                      style={{
-                        height: "16px",
-                        borderRadius: "8px",
-                        background: "#eee",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
-                      }}
-                    >
+                  ))
+                ) : (
+                  <div className="text-gray-400">No opening data found.</div>
+                )}
+              </div>
+              {/* Black Openings */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-md mb-2 text-gray-700">Black</h3>
+                {openingsStatsBlack && openingsStatsBlack.length > 0 ? (
+                  openingsStatsBlack.slice(0, 5).map((o, idx) => (
+                    <div key={`black-${o.eco || "unknown"}-${o.name || "unknown"}-${idx}`} className="mb-4">
+                      <strong>{o.name && o.name !== o.eco ? o.name : o.eco || "Unknown Opening"}</strong> ({o.count} games)
                       <div
+                        className="flex overflow-hidden mt-2 w-1/2"
                         style={{
-                          width: `${o.winPct}%`,
-                          background: "#22c55e",
-                          borderTopLeftRadius: "8px",
-                          borderBottomLeftRadius: "8px",
-                          transition: "width 0.3s"
+                          height: "16px",
+                          borderRadius: "8px",
+                          background: "#eee",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
                         }}
-                        title={`Win: ${o.winPct}%`}
-                      />
-                      <div
-                        style={{
-                          width: `${o.drawPct}%`,
-                          background: "#a3a3a3",
-                          transition: "width 0.3s"
-                        }}
-                        title={`Draw: ${o.drawPct}%`}
-                      />
-                      <div
-                        style={{
-                          width: `${o.lossPct}%`,
-                          background: "#ef4444",
-                          borderTopRightRadius: "8px",
-                          borderBottomRightRadius: "8px",
-                          transition: "width 0.3s"
-                        }}
-                        title={`Loss: ${o.lossPct}%`}
-                      />
+                      >
+                        <div
+                          style={{
+                            width: `${o.winPct}%`,
+                            background: "#22c55e",
+                            borderTopLeftRadius: "8px",
+                            borderBottomLeftRadius: "8px",
+                            transition: "width 0.3s"
+                          }}
+                          title={`Win: ${o.winPct}%`}
+                        />
+                        <div
+                          style={{
+                            width: `${o.drawPct}%`,
+                            background: "#a3a3a3",
+                            transition: "width 0.3s"
+                          }}
+                          title={`Draw: ${o.drawPct}%`}
+                        />
+                        <div
+                          style={{
+                            width: `${o.lossPct}%`,
+                            background: "#ef4444",
+                            borderTopRightRadius: "8px",
+                            borderBottomRightRadius: "8px",
+                            transition: "width 0.3s"
+                          }}
+                          title={`Loss: ${o.lossPct}%`}
+                        />
+                      </div>
+                      <div className="flex text-xs mt-1 gap-2">
+                        <span className="text-green-600">Win: {o.winPct}%</span>
+                        <span className="text-gray-600">Draw: {o.drawPct}%</span>
+                        <span className="text-red-600">Loss: {o.lossPct}%</span>
+                      </div>
                     </div>
-                    <div className="flex text-xs mt-1 gap-2">
-                      <span className="text-green-600">Win: {o.winPct}%</span>
-                      <span className="text-gray-600">Draw: {o.drawPct}%</span>
-                      <span className="text-red-600">Loss: {o.lossPct}%</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-gray-400">No opening data found.</div>
-              )}
+                  ))
+                ) : (
+                  <div className="text-gray-400">No opening data found.</div>
+                )}
+              </div>
             </div>
           </div>
         </div>
